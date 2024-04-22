@@ -20,7 +20,6 @@ use freedesktop_entry_parser::parse_entry;
 use gio::{prelude::{AppInfoExt, AppInfoExtManual}, AppInfo, AppInfoCreateFlags};
 use glib::{shell_parse_argv, GString, MainContext, Type, prelude::ObjectExt};
 use gtk::{prelude::CssProviderExt, CssProvider};
-use osstrtools::OsStrTools;
 use std::ffi::OsStr;
 use std::path::PathBuf;
 use std::process::Command;
@@ -91,13 +90,16 @@ pub fn launch_app(info: &AppInfo, term_command: Option<&str>) {
             _ => info.executable(),
         })
         .as_os_str()
-        .quote_single();
+        .to_owned();
+
+        let quoted_command = command.to_str().map(|x| format!("'{}'", x))
+            .expect("Invalid UTF-8 commandline");
 
         let commandline = if let Some(term) = term_command {
-            OsStr::new(term).replace("{}", command)
+            OsStr::new(&term.replace("{}", &quoted_command)).to_owned()
         } else if let Some(mut term) = std::env::var_os("TERMINAL") {
             term.push(" -e ");
-            term.push(command);
+            term.push(quoted_command);
             term
         } else {
             return;
