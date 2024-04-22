@@ -19,14 +19,16 @@ along with sirula.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::locale::string_collate;
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
+use gdk::pango::{AttrList, EllipsizeMode};
 use gio::AppInfo;
+use gio::prelude::AppInfoExt;
 use glib::shell_unquote;
 use gtk::{
-    builders::{BoxBuilder, ImageBuilder, LabelBuilder},
+    builders::ImageBuilder,
     prelude::*,
-    IconLookupFlags, IconTheme, Label, ListBoxRow, Orientation,
+    Box as GtkBox, IconLookupFlags, IconTheme, Label, ListBoxRow, Orientation,
 };
-use pango::{AttrList, Attribute, EllipsizeMode};
+use pango::{Attribute};
 use std::cmp::Ordering;
 use std::collections::HashMap;
 
@@ -216,7 +218,7 @@ pub fn load_entries(
             format!("{} {}", display_string, hidden)
         };
 
-        let label = LabelBuilder::new()
+        let label = Label::builder()
             .xalign(0.0f32)
             .label(&display_string)
             .wrap(true)
@@ -237,7 +239,7 @@ pub fn load_entries(
         }
         image.style_context().add_class(APP_ICON_CLASS);
 
-        let hbox = BoxBuilder::new()
+        let hbox = GtkBox::builder()
             .orientation(Orientation::Horizontal)
             .build();
         hbox.pack_start(&image, false, false, 0);

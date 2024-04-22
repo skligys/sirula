@@ -18,7 +18,7 @@ along with sirula.  If not, see <https://www.gnu.org/licenses/>.
 use crate::consts::*;
 use freedesktop_entry_parser::parse_entry;
 use gio::{prelude::{AppInfoExt, AppInfoExtManual}, AppInfo, AppInfoCreateFlags};
-use glib::{shell_parse_argv, GString, MainContext, ObjectExt};
+use glib::{shell_parse_argv, GString, MainContext, Type, prelude::ObjectExt};
 use gtk::{prelude::CssProviderExt, CssProvider};
 use osstrtools::OsStrTools;
 use std::ffi::OsStr;
@@ -77,16 +77,14 @@ pub fn launch_app(info: &AppInfo, term_command: Option<&str>) {
         .app_launch_context()
         .unwrap();
 
-    if info
-        .try_property::<GString>("filename")
-        .ok()
-        .and_then(|s| parse_entry(&s).ok())
-        .and_then(|e| {
-            e.section("Desktop Entry")
-                .attr("Terminal")
-                .map(|t| t == "1" || t == "true")
-        })
-        .unwrap_or_default()
+    if info.has_property("filename", Some(Type::STRING)) &&
+        parse_entry(&info.property::<GString>("filename")).ok()
+            .and_then(|e| {
+                e.section("Desktop Entry")
+                    .attr("Terminal")
+                    .map(|t| t == "1" || t == "true")
+            })
+            .unwrap_or_default()
     {
         let command = (match info.commandline() {
             Some(c) => c,

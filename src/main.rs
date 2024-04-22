@@ -18,11 +18,9 @@ along with sirula.  If not, see <https://www.gnu.org/licenses/>.
 use fuzzy_matcher::skim::SkimMatcherV2;
 use gdk::keys::constants;
 use gio::prelude::*;
-use gtk::{
-    builders::{BoxBuilder, EntryBuilder, ListBoxBuilder, ScrolledWindowBuilder},
-    prelude::*,
-    ListBoxRow,
-};
+use glib::Propagation;
+use gtk::{prelude::*, Box as GtkBox, Entry, ListBox, ListBoxRow, ScrolledWindow};
+use gtk_layer_shell::{Edge, Layer, LayerShell};
 use libc::LC_ALL;
 use std::env::args;
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
@@ -52,41 +50,41 @@ fn app_startup(application: &gtk::Application) {
     let window = gtk::ApplicationWindow::new(application);
     window.set_size_request(config.width, config.height);
 
-    gtk_layer_shell::init_for_window(&window);
-    gtk_layer_shell::set_keyboard_interactivity(&window, true);
-    gtk_layer_shell::set_layer(&window, gtk_layer_shell::Layer::Overlay);
+    window.init_layer_shell();
+    window.set_keyboard_interactivity(true);
+    window.set_layer(Layer::Overlay);
 
     if config.exclusive {
-        gtk_layer_shell::auto_exclusive_zone_enable(&window);
+        window.auto_exclusive_zone_enable();
     }
 
-    gtk_layer_shell::set_margin(&window, gtk_layer_shell::Edge::Left, config.margin_left);
-    gtk_layer_shell::set_margin(&window, gtk_layer_shell::Edge::Right, config.margin_right);
-    gtk_layer_shell::set_margin(&window, gtk_layer_shell::Edge::Top, config.margin_top);
-    gtk_layer_shell::set_margin(&window, gtk_layer_shell::Edge::Bottom, config.margin_bottom);
+    window.set_layer_shell_margin(Edge::Left, config.margin_left);
+    window.set_layer_shell_margin(Edge::Right, config.margin_right);
+    window.set_layer_shell_margin(Edge::Top, config.margin_top);
+    window.set_layer_shell_margin(Edge::Bottom, config.margin_bottom);
 
-    gtk_layer_shell::set_anchor(&window, gtk_layer_shell::Edge::Left, config.anchor_left);
-    gtk_layer_shell::set_anchor(&window, gtk_layer_shell::Edge::Right, config.anchor_right);
-    gtk_layer_shell::set_anchor(&window, gtk_layer_shell::Edge::Top, config.anchor_top);
-    gtk_layer_shell::set_anchor(&window, gtk_layer_shell::Edge::Bottom, config.anchor_bottom);
+    window.set_anchor(Edge::Left, config.anchor_left);
+    window.set_anchor(Edge::Right, config.anchor_right);
+    window.set_anchor(Edge::Top, config.anchor_top);
+    window.set_anchor(Edge::Bottom, config.anchor_bottom);
 
     window.set_decorated(false);
     window.set_app_paintable(true);
 
-    let vbox = BoxBuilder::new()
+    let vbox = GtkBox::builder()
         .name(ROOT_BOX_NAME)
         .orientation(gtk::Orientation::Vertical)
         .build();
-    let entry = EntryBuilder::new().name(SEARCH_ENTRY_NAME).build(); // .width_request(300)
+    let entry = Entry::builder().name(SEARCH_ENTRY_NAME).build(); // .width_request(300)
     vbox.pack_start(&entry, false, false, 0);
 
-    let scroll = ScrolledWindowBuilder::new()
+    let scroll = ScrolledWindow::builder()
         .name(SCROLL_NAME)
         .hscrollbar_policy(gtk::PolicyType::Never)
         .build();
     vbox.pack_end(&scroll, true, true, 0);
 
-    let listbox = ListBoxBuilder::new().name(LISTBOX_NAME).build();
+    let listbox = ListBox::builder().name(LISTBOX_NAME).build();
     scroll.add(&listbox);
 
     let history = Rc::new(RefCell::new(load_history()));
@@ -99,10 +97,10 @@ fn app_startup(application: &gtk::Application) {
     window.connect_key_press_event(clone!(entry, listbox, entries => move |window, event| {
         use constants::*;
         #[allow(non_upper_case_globals)]
-        Inhibit(match event.keyval() {
+        match event.keyval() {
             Escape => {
                 window.close();
-                true
+                Propagation::Stop
             },
             Down | Tab if entry.has_focus() => {
                 if let Some(r0) = listbox.row_at_index(0) {
@@ -121,17 +119,17 @@ fn app_startup(application: &gtk::Application) {
                         }
                     }
                 }
-                false
+                Propagation::Proceed
             },
             Up | Down | Page_Up | Page_Down | Tab | Shift_L | Shift_R | Control_L | Control_R
-            | Alt_L | Alt_R | ISO_Left_Tab | Return => false,
+            | Alt_L | Alt_R | ISO_Left_Tab | Return => Propagation::Proceed,
             _ => {
                 if !event.is_modifier() && !entry.has_focus() {
                     entry.grab_focus_without_selecting();
                 }
-                false
+                Propagation::Proceed
             }
-        })
+        }
     }));
 
     let matcher = SkimMatcherV2::default();

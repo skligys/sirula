@@ -87,7 +87,7 @@ impl Config {
             Some(file) => std::fs::read_to_string(file).expect("Cannot read config"),
             _ => "".to_owned(),
         };
-        let config: Config = toml::from_str(&config_str).expect("Cannot parse config: {}");
+        let config: Config = toml::from_str(&config_str).unwrap_or_else(|e| panic!("Cannot parse config: {}", e));
         config
     }
 }
@@ -95,6 +95,5 @@ impl Config {
 fn parse_attributes(markup: &str) -> Result<Vec<Attribute>, String> {
     let (attributes, _, _) = pango::parse_markup(&format!("<span {}>X</span>", markup), '\0')
         .map_err(|err| format!("Failed to parse markup: {}", err))?;
-    let mut iter = attributes.iterator().ok_or("Failed to parse markup")?;
-    Ok(iter.attrs())
+    Ok(attributes.attributes())
 }
