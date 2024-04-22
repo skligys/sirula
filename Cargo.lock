@@ -515,12 +515,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "lazy_static"
-version = "1.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
-
-[[package]]
 name = "lexical-core"
 version = "0.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -538,16 +532,6 @@ name = "libc"
 version = "0.2.126"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "349d5a591cd28b49e1d1037471617a32ddcda5731b99419008085f72d5a53836"
-
-[[package]]
-name = "locale-types"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "02be1c159bff06af0fdec8942a4f3a9242cc2ecebdfccb0d29d3c100ca5e7a97"
-dependencies = [
- "lazy_static",
- "regex",
-]
 
 [[package]]
 name = "memchr"
@@ -802,7 +786,6 @@ dependencies = [
  "gtk",
  "gtk-layer-shell",
  "libc",
- "locale-types",
  "osstrtools",
  "pango",
  "regex",
